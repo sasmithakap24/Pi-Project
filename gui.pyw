@@ -1,10 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
-from functions import scan_usb_for_viruses, list_usb_devices, hash_files, diagnose_storage
+from functions import scan_usb_for_viruses, list_usb_devices, detect_potential_threats, diagnose_storage
+from performance import test_sequential_speed, test_random_speed
 from data import ClearData
 from history import History
-
-# 🆕 Newly added
 import threading
 from tkinter import ttk
 
@@ -17,10 +16,9 @@ def show_output(title, content):
 
 def run_normal_scan():
     info = list_usb_devices()
-    hashes = hash_files()
-    show_output("Normal Scan", f"{info}\n\n{hashes}")
+    threats = detect_potential_threats()
+    show_output("Normal Scan", f"{info}\n\nPotential Threats:\n{threats}")
 
-# 🆕 Newly added: virus scan with progress bar
 def run_virus_scan():
     progress_win = tk.Toplevel(root)
     progress_win.title("Scanning...")
@@ -52,12 +50,52 @@ def run_history():
     result = History()
     show_output("History", result)
 
+def run_performance_test():
+    progress_win = tk.Toplevel(root)
+    progress_win.title("Testing Performance...")
+
+    label = tk.Label(progress_win, text="Running sequential read/write tests. Please wait...")
+    label.pack(pady=10)
+
+    progress = ttk.Progressbar(progress_win, mode='indeterminate', length=300)
+    progress.pack(pady=10)
+    progress.start()
+
+    def test_and_show():
+        result = test_sequential_speed()
+        progress.stop()
+        progress_win.destroy()
+        show_output("Performance Test", result)
+
+    threading.Thread(target=test_and_show).start()
+
+def run_random_test():
+    progress_win = tk.Toplevel(root)
+    progress_win.title("Testing Random I/O...")
+
+    label = tk.Label(progress_win, text="Running random read/write tests. Please wait...")
+    label.pack(pady=10)
+
+    progress = ttk.Progressbar(progress_win, mode='indeterminate', length=300)
+    progress.pack(pady=10)
+    progress.start()
+
+    def test_and_show():
+        result = test_random_speed()
+        progress.stop()
+        progress_win.destroy()
+        show_output("Random I/O Test", result)
+
+    threading.Thread(target=test_and_show).start()
+
 root = tk.Tk()
 root.title("USB Forensic Analyzer GUI")
 
 tk.Button(root, text="Normal Scan", command=run_normal_scan, width=30).pack(pady=5)
 tk.Button(root, text="Virus Scan", command=run_virus_scan, width=30).pack(pady=5)
 tk.Button(root, text="Storage Diagnosis", command=run_storage_diagnosis, width=30).pack(pady=5)
+tk.Button(root, text="Performance Test", command=run_performance_test, width=30).pack(pady=5)
+tk.Button(root, text="Random I/O Test", command=run_random_test, width=30).pack(pady=5)
 tk.Button(root, text="Clear Data", command=run_clear_data, width=30).pack(pady=5)
 tk.Button(root, text="View History", command=run_history, width=30).pack(pady=5)
 tk.Button(root, text="Exit", command=root.quit, width=30).pack(pady=5)

@@ -96,7 +96,7 @@ def list_usb_devices():
         log_event(f"Error capturing USB metadata: {e}")
         return 'Error capturing metadata.'
 
-def hash_files():
+def detect_potential_threats():
     usb_path = get_usb_mount_path()
     if not usb_path or not os.path.exists(usb_path):
         log_event("USB mount point not found.")
@@ -106,26 +106,28 @@ def hash_files():
     if not safe:
         return msg
 
-    target_extensions = ('.exe', '.dll', '.sh', '.py', '.bat', '.bin')  # ← Customize this list
-    results = []
+    suspicious_exts = ('.exe', '.dll', '.bat', '.sh', '.py', '.bin')
+    suspicious_files = []
 
     for root, dirs, files in os.walk(usb_path):
         for file in files:
-            if file.lower().endswith(target_extensions):
-                path = os.path.join(root, file)
-                try:
-                    hash_output = subprocess.check_output(["sha256sum", path]).decode()
-                    with open("usb_hashes.txt", "a") as hash_log:
-                        hash_log.write(f"{datetime.datetime.now()}: {hash_output}")
-                    results.append(hash_output)
-                except Exception as e:
-                    log_event(f"Failed to hash {path}: {e}")
+            path = os.path.join(root, file)
+            try:
+                size = os.path.getsize(path)
+                is_hidden = file.startswith('.') or '/.' in path
+                if file.lower().endswith(suspicious_exts) or is_hidden or size > 10 * 1024 * 1024:
+                    suspicious_files.append(f"{path} — Size: {size} bytes — Hidden: {is_hidden}")
+            except Exception as e:
+                log_event(f"Error analyzing {path}: {e}")
 
-    if results:
-        return "\n".join(results)
+    if suspicious_files:
+        with open("potential_threats.txt", "a") as threat_log:
+            for entry in suspicious_files:
+                threat_log.write(f"{datetime.datetime.now()}: {entry}\n")
+        log_event("Potential threats detected and logged.")
+        return "\n".join(suspicious_files)
     else:
-        return "No target files found for hashing."
-
+        return "No suspicious files detected."
 
 def diagnose_storage():
     usb_path = get_usb_mount_path()
