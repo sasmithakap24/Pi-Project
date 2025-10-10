@@ -27,19 +27,18 @@ def extract_dd_speed(output):
 
 def extract_fio_speeds(output):
     read_speed = write_speed = "Unknown"
-    for line in output.splitlines():
+    lines = output.splitlines()
+
+    for line in lines:
         if "read:" in line and "IOPS=" in line:
-            parts = line.split(",")
-            for part in parts:
+            for part in line.split(","):
                 if "BW=" in part:
-                    raw = part.strip().split("BW=")[-1].split()[0]
-                    read_speed = raw
+                    read_speed = part.strip().split("BW=")[-1].split()[0]
         elif "write:" in line and "IOPS=" in line:
-            parts = line.split(",")
-            for part in parts:
+            for part in line.split(","):
                 if "BW=" in part:
-                    raw = part.strip().split("BW=")[-1].split()[0]
-                    write_speed = raw
+                    write_speed = part.strip().split("BW=")[-1].split()[0]
+
     return read_speed, write_speed
 
 def test_sequential_speed():
@@ -86,23 +85,49 @@ def test_random_speed():
     try:
         flush_caches()
 
-        fio_cmd = [
+        # First cycle: random read with direct I/O
+        fio_read_cmd = [
             "fio",
-            "--name=randtest",
+            "--name=randread",
             f"--directory={mount_path}",
-            "--rw=randrw",
+            "--rw=randread",
             "--size=100M",
             "--bs=4k",
             "--numjobs=1",
             "--iodepth=32",
             "--runtime=30",
-            "--group_reporting"
+            "--group_reporting",
+            "--direct=1"
         ]
-        result = subprocess.run(fio_cmd, capture_output=True, text=True)
-        read_speed, write_speed = extract_fio_speeds(result.stdout)
+        read_result = subprocess.run(fio_read_cmd, capture_output=True, text=True)
+        read_speed, _ = extract_fio_speeds(read_result.stdout)
+
+        flush_caches()
+
+        # Second cycle: random write with direct I/O and sync
+        fio_write_cmd = [
+            "fio",
+            "--name=randwrite",
+            f"--directory={mount_path}",
+            "--rw=randwrite",
+            "--size=100M",
+            "--bs=4k",
+            "--numjobs=1",
+            "--iodepth=32",
+            "--runtime=30",
+            "--group_reporting",
+            "--direct=1",
+            "--sync=1"
+        ]
+        write_result = subprocess.run(fio_write_cmd, capture_output=True, text=True)
+        _, write_speed = extract_fio_speeds(write_result.stdout)
 
         pi_read = normalize_speed(read_speed)
         pi_write = normalize_speed(write_speed)
+
+        # Sanity check
+        if pi_write > 10 * pi_read:
+            log_event("Warning: Random write speed unusually high compared to read.")
 
         log_event(f"Random I/O test: Read={pi_read} MB/s, Write={pi_write} MB/s")
         with open("performance_log.txt", "a") as log:
