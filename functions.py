@@ -33,19 +33,6 @@ def get_usb_mount_path():
             return path
     return None
 
-def mount_read_only():
-    mount_point = get_usb_mount_path()
-    if not mount_point:
-        log_event("No USB mount point found.")
-        return "No external device detected."
-    try:
-        subprocess.run(["sudo", "mount", "-o", "remount,ro", mount_point], check=True)
-        log_event(f"Remounted USB read-only at {mount_point}")
-        return f"Mounted read-only at {mount_point}"
-    except Exception as e:
-        log_event(f"Mount failed: {e}")
-        return f"Mount error: {e}"
-
 def readfile(filename):
     try:
         with open(filename, 'r') as file:
