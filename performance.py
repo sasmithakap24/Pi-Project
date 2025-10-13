@@ -1,6 +1,7 @@
 import subprocess
 import datetime
 from functions import get_usb_mount_path, log_event
+import os
 
 def flush_caches():
     subprocess.run("sync", shell=True)
@@ -85,7 +86,7 @@ def test_random_speed():
     try:
         flush_caches()
 
-        # First cycle: random read with direct I/O
+        # First cycle: random read with direct I/O and auto-delete
         fio_read_cmd = [
             "fio",
             "--name=randread",
@@ -97,14 +98,15 @@ def test_random_speed():
             "--iodepth=32",
             "--runtime=30",
             "--group_reporting",
-            "--direct=1"
+            "--direct=1",
+            "--unlink=1"
         ]
         read_result = subprocess.run(fio_read_cmd, capture_output=True, text=True)
         read_speed, _ = extract_fio_speeds(read_result.stdout)
 
         flush_caches()
 
-        # Second cycle: random write with direct I/O and sync
+        # Second cycle: random write with direct I/O and auto-delete
         fio_write_cmd = [
             "fio",
             "--name=randwrite",
@@ -117,7 +119,8 @@ def test_random_speed():
             "--runtime=30",
             "--group_reporting",
             "--direct=1",
-            "--sync=1"
+            "--sync=1",
+            "--unlink=1"
         ]
         write_result = subprocess.run(fio_write_cmd, capture_output=True, text=True)
         _, write_speed = extract_fio_speeds(write_result.stdout)
@@ -125,7 +128,6 @@ def test_random_speed():
         pi_read = normalize_speed(read_speed)
         pi_write = normalize_speed(write_speed)
 
-        # Sanity check
         if pi_write > 10 * pi_read:
             log_event("Warning: Random write speed unusually high compared to read.")
 
