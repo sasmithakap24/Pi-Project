@@ -1,0 +1,1 @@
+2025-10-31T14:28:16.365692: /media/pasindu/40B4-12CB/kali-linux-2025.2-installer-amd64.iso — Size: 4478939136 bytes — Hidden: False

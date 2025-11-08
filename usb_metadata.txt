@@ -1,0 +1,16 @@
+2025-10-31T14:28:16.353033:
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 048d:1234 Integrated Technology Express, Inc. Chipsbank CBM2199 Flash Drive
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 002: ID 80ee:0021 VirtualBox USB Tablet
+
+2025-11-01T11:04:04.325459:
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 002: ID 80ee:0021 VirtualBox USB Tablet
+
+2025-11-02T13:15:45.444054:
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 002: ID 80ee:0021 VirtualBox USB Tablet
+

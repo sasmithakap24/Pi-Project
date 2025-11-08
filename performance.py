@@ -2,6 +2,9 @@ import subprocess
 from functions import get_usb_mount_path, log_event,get_timestamp
 import os
 
+parent_dir=os.path.dirname(os.path.abspath(__file__))
+perffile=os.path.join(parent_dir, 'performance_log.txt')
+
 def flush_caches():
     subprocess.run("sync", shell=True)
     subprocess.run(["sudo", "tee", "/proc/sys/vm/drop_caches"], input="3", text=True, stdout=subprocess.DEVNULL)
@@ -67,7 +70,7 @@ def test_sequential_speed():
         pi_write = normalize_speed(write_speed)
 
         log_event(f"Sequential test: Write={pi_write} MB/s, Read={pi_read} MB/s")
-        with open("performance_log.txt", "a") as log:
+        with open(perffile, "a") as log:
             timestamp = get_timestamp()
             log.write(f"{timestamp}: Sequential Write={pi_write} MB/s, Read={pi_read} MB/s\n")
 
@@ -131,7 +134,7 @@ def test_random_speed():
             log_event("Warning: Random write speed unusually high compared to read.")
 
         log_event(f"Random I/O test: Read={pi_read} MB/s, Write={pi_write} MB/s")
-        with open("performance_log.txt", "a") as log:
+        with open(perffile, "a") as log:
             timestamp = get_timestamp()
             log.write(f"{timestamp}: Random Read={pi_read} MB/s, Write={pi_write} MB/s\n")
 

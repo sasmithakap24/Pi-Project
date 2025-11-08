@@ -1,30 +1,19 @@
 import subprocess
 import datetime
 import os
-import psutil
+
+parent_dir=os.path.dirname(os.path.abspath(__file__))
+logfile=os.path.join(parent_dir, 'usb_log.txt')
+metafile=os.path.join(parent_dir, 'usb_metadata.txt')
+threatfile=os.path.join(parent_dir, 'potential_threats.txt')
 
 def get_timestamp():
     return datetime.datetime.now().isoformat()
 
 def log_event(message):
-    with open("usb_log.txt", "a") as log:
+    with open(logfile, "a") as log:
         timestamp = get_timestamp()
         log.write(f"{timestamp}: {message}\n")
-
-def system_safe():
-    temp = get_temp()
-    ram = psutil.virtual_memory().percent
-    if temp > 60 or ram > 85:
-        log_event("Scan aborted due to unsafe system state.")
-        return False, f"Unsafe system state: Temp={temp} C, RAM={ram}%"
-    return True, ""
-
-def get_temp():
-    try:
-        output = subprocess.check_output(["vcgencmd", "measure_temp"]).decode()
-        return float(output.replace("temp=", "").replace("'C\n", ""))
-    except:
-        return 0.0
 
 def get_usb_mount_path():
     media_root = "/media/pasindu"
@@ -38,7 +27,7 @@ def get_usb_mount_path():
 
 def readfile(filename):
     try:
-        with open(filename, 'r') as file:
+        with open(os.path.join(parent_dir, filename), 'r') as file:
             return file.read()
     except Exception as e:
         log_event(f"Read error on {filename}: {e}")
@@ -46,7 +35,7 @@ def readfile(filename):
 
 def clear(filename):
     try:
-        with open(filename, 'w') as file:
+        with open(os.path.join(parent_dir, filename), 'w') as file:
             file.truncate(0)
         log_event(f"Cleared content of {filename}")
         return 'Successfully cleared content.'
@@ -59,10 +48,6 @@ def scan_usb_for_viruses():
     if not usb_path:
         log_event("No mounted USB or microSD found.")
         return "No external device detected."
-
-    safe, msg = system_safe()
-    if not safe:
-        return msg
 
     try:
         log_event(f"Starting virus scan on {usb_path}.")
@@ -77,7 +62,7 @@ def list_usb_devices():
     try:
         output = subprocess.check_output(["lsusb"]).decode()
         timestamp = get_timestamp()
-        with open("usb_metadata.txt", "a") as meta:
+        with open(metafile,"a") as meta:
             info = f"{timestamp}:\n{output}\n"
             meta.write(info)
         log_event("USB metadata captured.")
@@ -91,10 +76,6 @@ def detect_potential_threats():
     if not usb_path or not os.path.exists(usb_path):
         log_event("USB mount point not found.")
         return "USB mount point not found."
-
-    safe, msg = system_safe()
-    if not safe:
-        return msg
 
     suspicious_exts = ('.exe', '.dll', '.bat', '.sh', '.py', '.bin')
     suspicious_files = []
@@ -111,7 +92,7 @@ def detect_potential_threats():
                 log_event(f"Error analyzing {path}: {e}")
 
     if suspicious_files:
-        with open("potential_threats.txt", "a") as threat_log:
+        with open(threatfile, "a") as threat_log:
             for entry in suspicious_files:
                 threat_log.write(f"{get_timestamp()}: {entry}\n")
         log_event("Potential threats detected and logged.")
